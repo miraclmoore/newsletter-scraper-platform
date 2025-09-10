@@ -240,17 +240,17 @@
                 <div>
                     <span class="method post">POST</span>
                     <code>/api/auth/login</code>
-                    <button class="test-button" onclick="testEndpoint('/api/auth/login', 'POST')">Test</button>
+                    <button class="test-button" data-endpoint="/api/auth/login" data-method="POST">Test</button>
                 </div>
                 <div>
                     <span class="method post">POST</span>
                     <code>/api/auth/register</code>
-                    <button class="test-button" onclick="testEndpoint('/api/auth/register', 'POST')">Test</button>
+                    <button class="test-button" data-endpoint="/api/auth/register" data-method="POST">Test</button>
                 </div>
                 <div>
                     <span class="method get">GET</span>
                     <code>/api/auth/oauth/google</code>
-                    <button class="test-button" onclick="window.open('/api/auth/oauth/google', '_blank')">Test</button>
+                    <button class="test-button" data-endpoint="/api/auth/oauth/google" data-action="oauth">Test</button>
                 </div>
             </div>
 
@@ -259,17 +259,17 @@
                 <div>
                     <span class="method get">GET</span>
                     <code>/api/webhooks/email/health</code>
-                    <button class="test-button" onclick="testEndpoint('/api/webhooks/email/health')">Test</button>
+                    <button class="test-button" data-endpoint="/api/webhooks/email/health">Test</button>
                 </div>
                 <div>
                     <span class="method get">GET</span>
                     <code>/api/webhooks/email/stats</code>
-                    <button class="test-button" onclick="testEndpoint('/api/webhooks/email/stats')">Test</button>
+                    <button class="test-button" data-endpoint="/api/webhooks/email/stats">Test</button>
                 </div>
                 <div>
                     <span class="method post">POST</span>
                     <code>/api/webhooks/email/sendgrid</code>
-                    <button class="test-button" onclick="testWebhook()">Test</button>
+                    <button class="test-button" data-action="webhook">Test</button>
                 </div>
             </div>
 
@@ -278,12 +278,12 @@
                 <div>
                     <span class="method get">GET</span>
                     <code>/api/sources</code>
-                    <button class="test-button" onclick="testEndpoint('/api/sources')">Test</button>
+                    <button class="test-button" data-endpoint="/api/sources">Test</button>
                 </div>
                 <div>
                     <span class="method get">GET</span>
                     <code>/api/items</code>
-                    <button class="test-button" onclick="testEndpoint('/api/items')">Test</button>
+                    <button class="test-button" data-endpoint="/api/items">Test</button>
                 </div>
             </div>
 
@@ -292,12 +292,12 @@
                 <div>
                     <span class="method post">POST</span>
                     <code>/api/exports/markdown</code>
-                    <button class="test-button" onclick="testExport('markdown')">Test</button>
+                    <button class="test-button" data-action="export" data-format="markdown">Test</button>
                 </div>
                 <div>
                     <span class="method post">POST</span>
                     <code>/api/exports/csv</code>
-                    <button class="test-button" onclick="testExport('csv')">Test</button>
+                    <button class="test-button" data-action="export" data-format="csv">Test</button>
                 </div>
             </div>
         </div>

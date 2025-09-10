@@ -4,7 +4,31 @@
 // Load system health on page load
 document.addEventListener('DOMContentLoaded', async function() {
     await loadSystemHealth();
+    setupEventListeners();
 });
+
+function setupEventListeners() {
+    // Add event listeners to all test buttons
+    const testButtons = document.querySelectorAll('.test-button');
+    testButtons.forEach(button => {
+        const endpoint = button.getAttribute('data-endpoint');
+        const method = button.getAttribute('data-method') || 'GET';
+        const action = button.getAttribute('data-action');
+        
+        button.addEventListener('click', function() {
+            if (action === 'webhook') {
+                testWebhook();
+            } else if (action === 'export') {
+                const format = button.getAttribute('data-format');
+                testExport(format);
+            } else if (action === 'oauth') {
+                window.open(endpoint, '_blank');
+            } else {
+                testEndpoint(endpoint, method);
+            }
+        });
+    });
+}
 
 async function loadSystemHealth() {
     try {

@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const UserModel = require('../models/supabase/User');
 const { jwt: jwtConfig } = require('../config/oauth');
 
 /**
@@ -19,10 +19,8 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, jwtConfig.secret);
     
-    // Fetch user from database
-    const user = await User.findByPk(decoded.userId, {
-      attributes: { exclude: ['passwordHash'] }
-    });
+    // Fetch user from database using Supabase model
+    const user = await UserModel.findById(decoded.userId);
 
     if (!user) {
       return res.status(401).json({ 
@@ -69,9 +67,7 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, jwtConfig.secret);
-      const user = await User.findByPk(decoded.userId, {
-        attributes: { exclude: ['passwordHash'] }
-      });
+      const user = await UserModel.findById(decoded.userId);
       
       if (user) {
         req.user = user;

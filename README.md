@@ -14,10 +14,11 @@ A modern newsletter aggregation and parsing platform that helps you consolidate 
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Node.js, Express.js, PostgreSQL, Sequelize
-- **Authentication**: JWT, OAuth 2.0 (Google, Microsoft)
+- **Backend**: Node.js, Express.js
+- **Database**: Supabase (PostgreSQL with real-time features)
+- **Authentication**: JWT, OAuth 2.0 (Google, Microsoft), Supabase Auth
 - **APIs**: Gmail API, Microsoft Graph API, OpenAI API
-- **Security**: Helmet, bcrypt, encrypted token storage
+- **Security**: Helmet, bcrypt, encrypted token storage, Row Level Security
 - **Testing**: Jest, Supertest
 
 ## 📦 Installation
@@ -39,10 +40,10 @@ A modern newsletter aggregation and parsing platform that helps you consolidate 
    # Edit .env with your configuration
    ```
 
-4. **Database setup**
-   - Install PostgreSQL
-   - Create database: `newsletter_scraper`
-   - Update database credentials in `.env`
+4. **Supabase setup**
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Copy your project URL and API keys to `.env`
+   - Run the SQL schema from `supabase/schema.sql` in your Supabase SQL Editor
 
 5. **OAuth setup**
    - **Google Cloud Console**: Enable Gmail API, create OAuth 2.0 credentials

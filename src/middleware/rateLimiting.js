@@ -65,6 +65,32 @@ const graphApiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Email webhook rate limiting
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 webhook requests per minute
+  message: {
+    error: 'Webhook rate limit exceeded',
+    message: 'Too many webhook requests, please slow down.',
+    retryAfter: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Email processing rate limiting
+const emailLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 50, // 50 email processing requests per minute
+  message: {
+    error: 'Email processing rate limit exceeded',
+    message: 'Too many email processing requests, please slow down.',
+    retryAfter: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Export rate limiting middleware
 module.exports = {
   generalLimiter,
@@ -72,4 +98,6 @@ module.exports = {
   oauthLimiter,
   gmailApiLimiter,
   graphApiLimiter,
+  webhookLimiter,
+  emailLimiter,
 };

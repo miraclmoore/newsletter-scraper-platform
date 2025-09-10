@@ -7,10 +7,11 @@ require('dotenv').config();
 const { generalLimiter } = require('./middleware/rateLimiting');
 
 // Import routes
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/auth-supabase');
+const emailWebhookRoutes = require('./routes/webhooks/email');
 
-// Import database
-const { initializeDatabase } = require('./models');
+// Import Supabase configuration
+const { supabaseAdmin } = require('./config/supabase');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +43,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/webhooks/email', emailWebhookRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -63,16 +65,27 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Initialize database and start server
+// Initialize Supabase connection and start server
 async function startServer() {
   try {
-    // Initialize database connection
-    await initializeDatabase();
+    // Test Supabase connection
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('count', { count: 'exact' })
+      .limit(1);
+    
+    if (error) {
+      console.error('❌ Supabase connection failed:', error.message);
+      console.log('💡 Please check your Supabase configuration in .env file');
+    } else {
+      console.log('✅ Supabase connection established successfully');
+    }
     
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Newsletter Scraper API server running on port ${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🗄️ Database: Supabase PostgreSQL`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
       
       if (process.env.NODE_ENV === 'development') {

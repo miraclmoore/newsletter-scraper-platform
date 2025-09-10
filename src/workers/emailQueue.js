@@ -292,7 +292,14 @@ async function addWebhookJob(webhookData, options = {}) {
     ...options
   };
   
-  return await emailQueue.add(JOB_TYPES.PROCESS_WEBHOOK, jobData, jobOptions);
+  // Add timeout to prevent hanging
+  const timeout = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Queue add timeout')), 5000)
+  );
+  
+  const addJob = emailQueue.add(JOB_TYPES.PROCESS_WEBHOOK, jobData, jobOptions);
+  
+  return await Promise.race([addJob, timeout]);
 }
 
 /**

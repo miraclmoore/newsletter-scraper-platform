@@ -99,10 +99,27 @@ router.post('/sendgrid',
       }
 
       // Add email to processing queue for async processing
-      const job = await addWebhookJob(webhookData, {
-        priority: 10, // High priority for real-time webhooks
-        attempts: 3
-      });
+      let job;
+      try {
+        job = await addWebhookJob(webhookData, {
+          priority: 10, // High priority for real-time webhooks
+          attempts: 3
+        });
+      } catch (queueError) {
+        console.error('Failed to add job to queue:', queueError.message);
+        // Process synchronously if queue is unavailable
+        const emailProcessor = require('../../services/email/processor');
+        const result = await emailProcessor.processWebhookEmail(webhookData);
+        
+        return res.status(200).json({
+          success: true,
+          message: 'Email processed synchronously (queue unavailable)',
+          data: {
+            result,
+            queueError: queueError.message
+          }
+        });
+      }
 
       console.log('Email queued for processing:', {
         jobId: job.id,

@@ -10,6 +10,8 @@ const redisConfig = process.env.REDIS_URL
       port: process.env.REDIS_PORT || 6379,
       password: process.env.REDIS_PASSWORD || undefined,
       db: process.env.REDIS_DB || 0,
+      connectTimeout: 10000,  // 10 second connection timeout
+      lazyConnect: true,      // Don't connect until first command
     };
 
 // Create email processing queue
@@ -410,20 +412,45 @@ async function scheduleRSSPolling(cronPattern = '*/30 * * * *') {
  * @returns {Object} Queue stats
  */
 async function getQueueStats() {
-  const waiting = await emailQueue.getWaiting();
-  const active = await emailQueue.getActive();
-  const completed = await emailQueue.getCompleted();
-  const failed = await emailQueue.getFailed();
-  const delayed = await emailQueue.getDelayed();
-  
-  return {
-    waiting: waiting.length,
-    active: active.length,
-    completed: completed.length,
-    failed: failed.length,
-    delayed: delayed.length,
-    total: waiting.length + active.length + completed.length + failed.length + delayed.length
-  };
+  try {
+    // Add timeout to prevent hanging
+    const timeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Queue stats timeout')), 5000)
+    );
+    
+    const statsPromise = Promise.all([
+      emailQueue.getWaiting(),
+      emailQueue.getActive(),
+      emailQueue.getCompleted(),
+      emailQueue.getFailed(),
+      emailQueue.getDelayed()
+    ]);
+    
+    const [waiting, active, completed, failed, delayed] = await Promise.race([
+      statsPromise,
+      timeout
+    ]);
+    
+    return {
+      waiting: waiting.length,
+      active: active.length,
+      completed: completed.length,
+      failed: failed.length,
+      delayed: delayed.length,
+      total: waiting.length + active.length + completed.length + failed.length + delayed.length
+    };
+  } catch (error) {
+    console.error('Failed to get queue stats:', error.message);
+    return {
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+      total: 0,
+      error: error.message
+    };
+  }
 }
 
 /**

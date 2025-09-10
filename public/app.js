@@ -67,15 +67,28 @@ async function testWebhook() {
         const response = await fetch('/api/webhooks/email/sendgrid', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-Signature': 'test-signature',
-                'X-Timestamp': Date.now().toString()
+                'Content-Type': 'application/json'
+                // Note: Signature verification is disabled in production without SENDGRID_WEBHOOK_SECRET
             },
             body: JSON.stringify({
-                envelope: { to: ['test@newsletters.app'] },
-                email: 'Test email content for demo'
+                envelope: { 
+                    to: ['test@newsletters.app'],
+                    from: 'newsletter@example.com'
+                },
+                email: 'Subject: Test Newsletter\n\nThis is a test email content for demo purposes.',
+                subject: 'Test Newsletter',
+                from: 'newsletter@example.com',
+                to: 'test@newsletters.app',
+                text: 'This is a test email content for demo purposes.',
+                html: '<p>This is a test email content for demo purposes.</p>'
             })
         });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`HTTP ${response.status}: ${errorData.message || 'Request failed'}`);
+        }
+        
         const data = await response.json();
         alert(`Webhook Test Response (${response.status}):\n${JSON.stringify(data, null, 2)}`);
     } catch (error) {

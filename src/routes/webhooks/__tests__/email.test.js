@@ -1,6 +1,30 @@
 const request = require('supertest');
 const express = require('express');
-const emailWebhookRoutes = require('../email');
+
+// Mock Bull queue to prevent Redis connection
+jest.mock('bull', () => {
+  return jest.fn().mockImplementation(() => ({
+    process: jest.fn(),
+    add: jest.fn(),
+    getStats: jest.fn(),
+    getHealth: jest.fn(),
+    close: jest.fn()
+  }));
+});
+
+// Mock ioredis to prevent Redis connection
+jest.mock('ioredis', () => {
+  return jest.fn().mockImplementation(() => ({
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    exists: jest.fn(),
+    expire: jest.fn(),
+    incr: jest.fn(),
+    disconnect: jest.fn(),
+    on: jest.fn()
+  }));
+});
 
 // Mock dependencies
 jest.mock('../../../workers/emailQueue', () => ({
@@ -15,6 +39,22 @@ jest.mock('../../../services/email/processor', () => ({
   getStats: jest.fn()
 }));
 
+// Mock SendGrid EventWebhook
+jest.mock('@sendgrid/eventwebhook', () => ({
+  EventWebhook: jest.fn().mockImplementation(() => ({
+    verifySignature: jest.fn().mockReturnValue(true)
+  }))
+}));
+
+// Mock rate limiting middleware
+jest.mock('../../../middleware/rateLimiting', () => ({
+  emailLimiter: (req, res, next) => next(),
+  webhookLimiter: (req, res, next) => next(),
+  generalLimiter: (req, res, next) => next()
+}));
+
+const emailWebhookRoutes = require('../email');
+
 const { addWebhookJob, addEmailJob, getQueueStats, getQueueHealth } = require('../../../workers/emailQueue');
 const emailProcessor = require('../../../services/email/processor');
 
@@ -23,11 +63,22 @@ describe('Email Webhook Routes', () => {
 
   beforeEach(() => {
     app = express();
-    app.use(express.json());
+    
+    // Simple JSON parsing for tests
+    app.use(express.json({ limit: '10mb' }));
+    
     app.use('/api/webhooks/email', emailWebhookRoutes);
 
     // Reset mocks
     jest.clearAllMocks();
+    
+    // Reset mock implementations to ensure they return promises
+    addWebhookJob.mockResolvedValue({ id: 'test-job-id', getStatus: jest.fn().mockResolvedValue('waiting') });
+    addEmailJob.mockResolvedValue({ id: 'test-job-id', getStatus: jest.fn().mockResolvedValue('waiting') });
+    getQueueStats.mockResolvedValue({ active: 0, waiting: 0, completed: 0, failed: 0 });
+    getQueueHealth.mockResolvedValue({ status: 'healthy', lastCheck: new Date() });
+    emailProcessor.healthCheck.mockResolvedValue({ status: 'healthy' });
+    emailProcessor.getStats.mockResolvedValue({ processed: 0, failed: 0 });
   });
 
   describe('POST /api/webhooks/email/sendgrid', () => {
@@ -42,17 +93,20 @@ describe('Email Webhook Routes', () => {
         from: 'newsletter@example.com'
       };
 
+      // Override default mock for this specific test
       const mockJob = {
         id: 'job123',
         getStatus: jest.fn().mockResolvedValue('waiting')
       };
-
       addWebhookJob.mockResolvedValue(mockJob);
 
       const response = await request(app)
         .post('/api/webhooks/email/sendgrid')
+        .set('X-Signature', 'test-signature')
+        .set('X-Timestamp', '1234567890')
         .send(webhookData);
 
+      
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Email queued for processing');
@@ -71,6 +125,8 @@ describe('Email Webhook Routes', () => {
 
       const response = await request(app)
         .post('/api/webhooks/email/sendgrid')
+        .set('X-Signature', 'test-signature')
+        .set('X-Timestamp', '1234567890')
         .send(invalidWebhookData);
 
       expect(response.status).toBe(400);
@@ -89,6 +145,8 @@ describe('Email Webhook Routes', () => {
 
       const response = await request(app)
         .post('/api/webhooks/email/sendgrid')
+        .set('X-Signature', 'test-signature')
+        .set('X-Timestamp', '1234567890')
         .send(webhookData);
 
       expect(response.status).toBe(500);
@@ -114,6 +172,8 @@ describe('Email Webhook Routes', () => {
 
       const response = await request(app)
         .post('/api/webhooks/email/events')
+        .set('X-Signature', 'test-signature')
+        .set('X-Timestamp', '1234567890')
         .send(events);
 
       expect(response.status).toBe(200);
@@ -127,6 +187,8 @@ describe('Email Webhook Routes', () => {
 
       const response = await request(app)
         .post('/api/webhooks/email/events')
+        .set('X-Signature', 'test-signature')
+        .set('X-Timestamp', '1234567890')
         .send(invalidEvents);
 
       expect(response.status).toBe(400);
@@ -382,6 +444,8 @@ describe('Email Webhook Routes', () => {
 
       const response = await request(app)
         .post('/api/webhooks/email/sendgrid')
+        .set('X-Signature', 'test-signature')
+        .set('X-Timestamp', '1234567890')
         .send(webhookData);
 
       expect(response.status).toBe(500);

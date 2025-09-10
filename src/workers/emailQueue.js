@@ -1,5 +1,6 @@
 const Queue = require('bull');
 const emailProcessor = require('../services/email/processor');
+const rssPoller = require('../services/rss/poller');
 
 // Create email processing queue
 const emailQueue = new Queue('email processing', {
@@ -25,7 +26,9 @@ const JOB_TYPES = {
   PROCESS_EMAIL: 'process_email',
   PROCESS_WEBHOOK: 'process_webhook',
   CLEANUP_DUPLICATES: 'cleanup_duplicates',
-  GENERATE_SUMMARY: 'generate_summary'
+  GENERATE_SUMMARY: 'generate_summary',
+  POLL_RSS_FEEDS: 'poll_rss_feeds',
+  POLL_SINGLE_RSS: 'poll_single_rss'
 };
 
 /**
@@ -171,6 +174,52 @@ emailQueue.process(JOB_TYPES.GENERATE_SUMMARY, 2, async (job) => {
 });
 
 /**
+ * Poll all RSS feeds job handler
+ */
+emailQueue.process(JOB_TYPES.POLL_RSS_FEEDS, 1, async (job) => {
+  console.log('Starting RSS feeds polling job');
+  
+  try {
+    await job.progress(10);
+    
+    await rssPoller.pollAllFeeds();
+    
+    await job.progress(100);
+    
+    console.log('RSS feeds polling job completed');
+    
+    return { success: true, timestamp: new Date().toISOString() };
+  } catch (error) {
+    console.error('RSS feeds polling job failed:', error);
+    throw error;
+  }
+});
+
+/**
+ * Poll single RSS feed job handler
+ */
+emailQueue.process(JOB_TYPES.POLL_SINGLE_RSS, 3, async (job) => {
+  const { sourceId } = job.data;
+  
+  console.log(`Polling single RSS feed: ${sourceId}`);
+  
+  try {
+    await job.progress(10);
+    
+    const result = await rssPoller.pollFeed(sourceId);
+    
+    await job.progress(100);
+    
+    console.log(`Single RSS feed polling completed: ${sourceId}`);
+    
+    return result;
+  } catch (error) {
+    console.error(`Single RSS feed polling failed: ${sourceId}`, error);
+    throw error;
+  }
+});
+
+/**
  * Queue event handlers
  */
 emailQueue.on('completed', (job, result) => {
@@ -285,6 +334,73 @@ async function addSummaryJob(itemId, userId, options = {}) {
 }
 
 /**
+ * Add RSS polling job to queue
+ * @param {Object} options - Job options
+ * @returns {Object} Job instance
+ */
+async function addRSSPollingJob(options = {}) {
+  const jobData = {
+    timestamp: new Date().toISOString()
+  };
+  
+  const jobOptions = {
+    priority: options.priority || 0,
+    delay: options.delay || 0,
+    attempts: options.attempts || 2,
+    ...options
+  };
+  
+  return await emailQueue.add(JOB_TYPES.POLL_RSS_FEEDS, jobData, jobOptions);
+}
+
+/**
+ * Add single RSS feed polling job to queue
+ * @param {string} sourceId - RSS source ID
+ * @param {Object} options - Job options
+ * @returns {Object} Job instance
+ */
+async function addSingleRSSPollingJob(sourceId, options = {}) {
+  const jobData = {
+    sourceId
+  };
+  
+  const jobOptions = {
+    priority: options.priority || 5,
+    delay: options.delay || 0,
+    attempts: options.attempts || 3,
+    ...options
+  };
+  
+  return await emailQueue.add(JOB_TYPES.POLL_SINGLE_RSS, jobData, jobOptions);
+}
+
+/**
+ * Schedule recurring RSS polling job
+ * @param {string} cronPattern - Cron pattern (default: every 30 minutes)
+ * @returns {Object} Scheduled job
+ */
+async function scheduleRSSPolling(cronPattern = '*/30 * * * *') {
+  // Remove existing recurring RSS polling jobs
+  const repeatableJobs = await emailQueue.getRepeatableJobs();
+  for (const job of repeatableJobs) {
+    if (job.name === JOB_TYPES.POLL_RSS_FEEDS) {
+      await emailQueue.removeRepeatableByKey(job.key);
+    }
+  }
+  
+  // Add new recurring job
+  return await emailQueue.add(
+    JOB_TYPES.POLL_RSS_FEEDS,
+    { scheduled: true },
+    {
+      repeat: { cron: cronPattern },
+      removeOnComplete: 5,
+      removeOnFail: 10
+    }
+  );
+}
+
+/**
  * Get queue statistics
  * @returns {Object} Queue stats
  */
@@ -358,6 +474,9 @@ module.exports = {
   addWebhookJob,
   addCleanupJob,
   addSummaryJob,
+  addRSSPollingJob,
+  addSingleRSSPollingJob,
+  scheduleRSSPolling,
   getQueueStats,
   cleanOldJobs,
   pauseQueue,

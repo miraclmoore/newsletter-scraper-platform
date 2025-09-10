@@ -9,9 +9,16 @@ const { generalLimiter } = require('./middleware/rateLimiting');
 // Import routes
 const authRoutes = require('./routes/auth-supabase');
 const emailWebhookRoutes = require('./routes/webhooks/email');
+const sourcesRoutes = require('./routes/sources');
+const itemsRoutes = require('./routes/items');
+const exportsRoutes = require('./routes/exports');
+const usersRoutes = require('./routes/users');
 
 // Import Supabase configuration
 const { supabaseAdmin } = require('./config/supabase');
+
+// Import RSS polling service
+const { rssPoller } = require('./services/rss');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,9 +48,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Serve static files
+app.use(express.static('public'));
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/webhooks/email', emailWebhookRoutes);
+app.use('/api/sources', sourcesRoutes);
+app.use('/api/items', itemsRoutes);
+app.use('/api/exports', exportsRoutes);
+app.use('/api/users', usersRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -80,6 +94,18 @@ async function startServer() {
     } else {
       console.log('✅ Supabase connection established successfully');
     }
+
+    // Start RSS polling service if enabled
+    if (process.env.RSS_POLLING_ENABLED !== 'false') {
+      try {
+        await rssPoller.startPolling();
+        console.log('📡 RSS polling service started');
+      } catch (error) {
+        console.error('❌ Failed to start RSS polling service:', error.message);
+      }
+    } else {
+      console.log('📡 RSS polling service disabled');
+    }
     
     // Start server
     app.listen(PORT, () => {
@@ -102,11 +128,23 @@ async function startServer() {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('🛑 SIGTERM received, shutting down gracefully...');
+  try {
+    rssPoller.stopPolling();
+    console.log('📡 RSS polling service stopped');
+  } catch (error) {
+    console.error('❌ Error stopping RSS polling service:', error.message);
+  }
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('🛑 SIGINT received, shutting down gracefully...');
+  try {
+    rssPoller.stopPolling();
+    console.log('📡 RSS polling service stopped');
+  } catch (error) {
+    console.error('❌ Error stopping RSS polling service:', error.message);
+  }
   process.exit(0);
 });
 

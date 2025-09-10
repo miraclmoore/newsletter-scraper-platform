@@ -183,13 +183,13 @@ class SourceModel {
   async updateSyncStatus(id, status, errorMessage = null) {
     const updates = {
       sync_status: status,
-      error_message: errorMessage,
+      sync_error: errorMessage,
       updated_at: new Date().toISOString()
     };
 
     if (status === 'success') {
       updates.last_sync_at = new Date().toISOString();
-      updates.error_message = null;
+      updates.sync_error = null;
     }
 
     const { data, error } = await this.supabase

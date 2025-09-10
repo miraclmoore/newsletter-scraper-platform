@@ -236,7 +236,7 @@ describe('EmailValidator', () => {
 
     test('should detect all caps subject', () => {
       const emailData = {
-        subject: 'URGENT NEWSLETTER UPDATE NOW',
+        subject: 'WEEKLY NEWSLETTER UPDATE TODAY',
         text: 'Content',
         html: ''
       };

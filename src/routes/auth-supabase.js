@@ -2,8 +2,6 @@ const express = require('express');
 const UserModel = require('../models/supabase/User');
 const OAuthCredentialModel = require('../models/supabase/OAuthCredential');
 const SourceModel = require('../models/supabase/Source');
-const GoogleOAuthService = require('../services/oauth/googleService');
-const MicrosoftOAuthService = require('../services/oauth/microsoftService');
 const { 
   authenticateToken, 
   generateToken, 
@@ -14,9 +12,27 @@ const { authLimiter, oauthLimiter } = require('../middleware/rateLimiting');
 
 const router = express.Router();
 
-// Initialize OAuth services
-const googleService = new GoogleOAuthService();
-const microsoftService = new MicrosoftOAuthService();
+// Initialize OAuth services only if credentials are provided
+let googleService = null;
+let microsoftService = null;
+
+try {
+  if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET) {
+    const GoogleOAuthService = require('../services/oauth/googleService');
+    googleService = new GoogleOAuthService();
+  }
+} catch (error) {
+  console.warn('⚠️  Google OAuth service not available:', error.message);
+}
+
+try {
+  if (process.env.OUTLOOK_CLIENT_ID && process.env.OUTLOOK_CLIENT_SECRET) {
+    const MicrosoftOAuthService = require('../services/oauth/microsoftService');
+    microsoftService = new MicrosoftOAuthService();
+  }
+} catch (error) {
+  console.warn('⚠️  Microsoft OAuth service not available:', error.message);
+}
 
 /**
  * POST /auth/register - Register new user with email/password
@@ -143,6 +159,13 @@ router.post('/login', authLimiter, async (req, res) => {
  */
 router.get('/google', oauthLimiter, authenticateToken, async (req, res) => {
   try {
+    if (!googleService) {
+      return res.status(503).json({
+        error: 'Service unavailable',
+        message: 'Google OAuth service is not configured'
+      });
+    }
+
     const state = generateOAuthState(req.userId);
     const authUrl = googleService.getAuthUrl(state);
     
@@ -165,6 +188,10 @@ router.get('/google', oauthLimiter, authenticateToken, async (req, res) => {
  */
 router.get('/google/callback', oauthLimiter, async (req, res) => {
   try {
+    if (!googleService) {
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?error=service_not_configured`);
+    }
+
     const { code, state, error } = req.query;
 
     if (error) {
@@ -232,6 +259,13 @@ router.get('/google/callback', oauthLimiter, async (req, res) => {
  */
 router.get('/microsoft', oauthLimiter, authenticateToken, async (req, res) => {
   try {
+    if (!microsoftService) {
+      return res.status(503).json({
+        error: 'Service unavailable',
+        message: 'Microsoft OAuth service is not configured'
+      });
+    }
+
     const state = generateOAuthState(req.userId);
     const authUrl = await microsoftService.getAuthUrl(state);
     
@@ -254,6 +288,10 @@ router.get('/microsoft', oauthLimiter, authenticateToken, async (req, res) => {
  */
 router.get('/microsoft/callback', oauthLimiter, async (req, res) => {
   try {
+    if (!microsoftService) {
+      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?error=service_not_configured`);
+    }
+
     const { code, state, error } = req.query;
 
     if (error) {
@@ -365,9 +403,17 @@ router.post('/disconnect', authenticateToken, async (req, res) => {
     try {
       const accessToken = credential.getAccessToken();
       if (provider === 'gmail') {
-        await googleService.revokeAccess(accessToken);
+        if (!googleService) {
+          console.warn('Google OAuth service not available for token revocation');
+        } else {
+          await googleService.revokeAccess(accessToken);
+        }
       } else {
-        await microsoftService.revokeAccess(accessToken);
+        if (!microsoftService) {
+          console.warn('Microsoft OAuth service not available for token revocation');
+        } else {
+          await microsoftService.revokeAccess(accessToken);
+        }
       }
     } catch (revokeError) {
       console.warn(`Failed to revoke ${provider} token:`, revokeError);

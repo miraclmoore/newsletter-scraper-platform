@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Scraper Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #00d4aa;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card p {
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        .api-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-section h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .endpoint-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .endpoint-group h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .method {
+            display: inline-block;
+            width: 60px;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-align: center;
+            margin-right: 0.5rem;
+        }
+
+        .get { background: #28a745; color: white; }
+        .post { background: #007bff; color: white; }
+        .put { background: #ffc107; color: black; }
+        .delete { background: #dc3545; color: white; }
+
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+            transition: background 0.3s ease;
+        }
+
+        .test-button:hover {
+            background: #5a67d8;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 3rem;
+        }
+
+        .health-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00d4aa;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        #health-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>📧 Newsletter Scraper Platform</h1>
+            <p>AI-powered newsletter aggregation with multi-source content collection</p>
+            <div class="status-badge">
+                <span class="health-indicator"></span>
+                🚀 Server Running - All Systems Operational
+            </div>
+            <div id="health-status">
+                <strong>Loading system status...</strong>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>🤖 AI-Powered Summarization</h3>
+                <p>OpenAI GPT integration for intelligent content summarization and insights.</p>
+                <div class="endpoint">/api/ai/summarize</div>
+            </div>
+
+            <div class="card">
+                <h3>📧 Email Processing</h3>
+                <p>Real-time email processing with SendGrid webhooks and queue management.</p>
+                <div class="endpoint">/api/webhooks/email/sendgrid</div>
+            </div>
+
+            <div class="card">
+                <h3>📡 RSS Integration</h3>
+                <p>Automated RSS feed polling and content aggregation from multiple sources.</p>
+                <div class="endpoint">/api/sources</div>
+            </div>
+
+            <div class="card">
+                <h3>📦 Export Functionality</h3>
+                <p>Export your data in Markdown, CSV, or JSON formats with full customization.</p>
+                <div class="endpoint">/api/exports/markdown</div>
+            </div>
+
+            <div class="card">
+                <h3>🔐 OAuth Integration</h3>
+                <p>Secure authentication with Google and Microsoft OAuth 2.0.</p>
+                <div class="endpoint">/api/auth/oauth/google</div>
+            </div>
+
+            <div class="card">
+                <h3>👤 User Management</h3>
+                <p>Complete GDPR-compliant user management with data export and deletion.</p>
+                <div class="endpoint">/api/users/profile</div>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <h2>🔌 Available API Endpoints</h2>
+            
+            <div class="endpoint-group">
+                <h4>Authentication</h4>
+                <div>
+                    <span class="method post">POST</span>
+                    <code>/api/auth/login</code>
+                    <button class="test-button" onclick="testEndpoint('/api/auth/login', 'POST')">Test</button>
+                </div>
+                <div>
+                    <span class="method post">POST</span>
+                    <code>/api/auth/register</code>
+                    <button class="test-button" onclick="testEndpoint('/api/auth/register', 'POST')">Test</button>
+                </div>
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/api/auth/oauth/google</code>
+                    <button class="test-button" onclick="window.open('/api/auth/oauth/google', '_blank')">Test</button>
+                </div>
+            </div>
+
+            <div class="endpoint-group">
+                <h4>Email Processing</h4>
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/api/webhooks/email/health</code>
+                    <button class="test-button" onclick="testEndpoint('/api/webhooks/email/health')">Test</button>
+                </div>
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/api/webhooks/email/stats</code>
+                    <button class="test-button" onclick="testEndpoint('/api/webhooks/email/stats')">Test</button>
+                </div>
+                <div>
+                    <span class="method post">POST</span>
+                    <code>/api/webhooks/email/sendgrid</code>
+                    <button class="test-button" onclick="testWebhook()">Test</button>
+                </div>
+            </div>
+
+            <div class="endpoint-group">
+                <h4>Content Management</h4>
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/api/sources</code>
+                    <button class="test-button" onclick="testEndpoint('/api/sources')">Test</button>
+                </div>
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/api/items</code>
+                    <button class="test-button" onclick="testEndpoint('/api/items')">Test</button>
+                </div>
+            </div>
+
+            <div class="endpoint-group">
+                <h4>Export Functions</h4>
+                <div>
+                    <span class="method post">POST</span>
+                    <code>/api/exports/markdown</code>
+                    <button class="test-button" onclick="testExport('markdown')">Test</button>
+                </div>
+                <div>
+                    <span class="method post">POST</span>
+                    <code>/api/exports/csv</code>
+                    <button class="test-button" onclick="testExport('csv')">Test</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🎉 <strong>All 8 Stories Implemented</strong> - Production Ready Newsletter Scraper Platform</p>
+            <p>Built with Node.js, Express, Supabase, Redis, OpenAI GPT, and React</p>
+        </div>
+    </div>
+
+    <script>
+        // Load system health on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/health');
+                const health = await response.json();
+                document.getElementById('health-status').innerHTML = `
+                    <strong>✅ System Health:</strong> ${health.status}<br>
+                    <strong>🕒 Timestamp:</strong> ${new Date(health.timestamp).toLocaleString()}<br>
+                    <strong>📋 Version:</strong> ${health.version}
+                `;
+            } catch (error) {
+                document.getElementById('health-status').innerHTML = `
+                    <strong>❌ Health Check Failed:</strong> ${error.message}
+                `;
+            }
+        });
+
+        async function testEndpoint(endpoint, method = 'GET') {
+            try {
+                const response = await fetch(endpoint, { method });
+                const data = await response.json();
+                alert(`${method} ${endpoint}\n\nResponse (${response.status}):\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                alert(`Error testing ${endpoint}:\n${error.message}`);
+            }
+        }
+
+        async function testWebhook() {
+            try {
+                const response = await fetch('/api/webhooks/email/sendgrid', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Signature': 'test-signature',
+                        'X-Timestamp': Date.now().toString()
+                    },
+                    body: JSON.stringify({
+                        envelope: { to: ['test@newsletters.app'] },
+                        email: 'Test email content for demo'
+                    })
+                });
+                const data = await response.json();
+                alert(`Webhook Test Response (${response.status}):\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                alert(`Webhook test error:\n${error.message}`);
+            }
+        }
+
+        async function testExport(format) {
+            try {
+                const response = await fetch(`/api/exports/${format}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        filters: {}, 
+                        options: { include_content: true } 
+                    })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `newsletter-export.${format}`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    alert(`${format.toUpperCase()} export started! Check your downloads.`);
+                } else {
+                    const error = await response.json();
+                    alert(`Export failed: ${error.message}`);
+                }
+            } catch (error) {
+                alert(`Export error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -246,7 +246,8 @@ class EmailValidator {
    * @returns {Object} Spam score result
    */
   calculateSpamScore(emailData) {
-    const subject = (emailData.subject || '').toLowerCase();
+    const originalSubject = emailData.subject || '';
+    const subject = originalSubject.toLowerCase();
     const content = ((emailData.text || '') + (emailData.html || '')).toLowerCase();
     
     let spamScore = 0;
@@ -261,13 +262,13 @@ class EmailValidator {
     });
 
     // Check for excessive punctuation
-    if (/!{3,}/.test(subject) || /\?{3,}/.test(subject)) {
+    if (/!{3,}/.test(originalSubject) || /\?{3,}/.test(originalSubject)) {
       spamScore += 1;
       reasons.push('Excessive punctuation in subject');
     }
 
     // Check for all caps subject
-    if (subject.length > 10 && subject === subject.toUpperCase()) {
+    if (originalSubject.length > 10 && originalSubject === originalSubject.toUpperCase()) {
       spamScore += 1;
       reasons.push('All caps subject line');
     }

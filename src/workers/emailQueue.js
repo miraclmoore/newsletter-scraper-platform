@@ -2,14 +2,19 @@ const Queue = require('bull');
 const emailProcessor = require('../services/email/processor');
 const rssPoller = require('../services/rss/poller');
 
+// Redis configuration - Railway provides REDIS_URL, fallback to individual vars
+const redisConfig = process.env.REDIS_URL 
+  ? process.env.REDIS_URL  // Railway format: redis://user:pass@host:port
+  : {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: process.env.REDIS_PORT || 6379,
+      password: process.env.REDIS_PASSWORD || undefined,
+      db: process.env.REDIS_DB || 0,
+    };
+
 // Create email processing queue
 const emailQueue = new Queue('email processing', {
-  redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379,
-    password: process.env.REDIS_PASSWORD || undefined,
-    db: process.env.REDIS_DB || 0,
-  },
+  redis: redisConfig,
   defaultJobOptions: {
     removeOnComplete: 10, // Keep last 10 completed jobs
     removeOnFail: 50, // Keep last 50 failed jobs

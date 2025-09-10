@@ -200,6 +200,32 @@ router.post('/events',
 router.post('/test',
   emailLimiter,
   async (req, res) => {
+    // Allow test endpoint in production for demo purposes
+    try {
+      return res.status(200).json({
+        success: true,
+        message: 'Test endpoint working',
+        data: {
+          body: req.body,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({
+        error: 'Test endpoint error',
+        message: error.message
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/webhooks/email/test-original
+ * Original test endpoint behavior (disabled in production)
+ */
+router.post('/test-original',
+  emailLimiter,
+  async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
       return res.status(404).json({
         error: 'Not found',

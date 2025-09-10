@@ -64,6 +64,24 @@ async function testEndpoint(endpoint, method = 'GET') {
 
 async function testWebhook() {
     try {
+        // First try the simple test endpoint
+        const testResponse = await fetch('/api/webhooks/email/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                test: 'simple test data',
+                timestamp: new Date().toISOString()
+            })
+        });
+        
+        if (testResponse.ok) {
+            const testData = await testResponse.json();
+            alert(`Simple Test Success (${testResponse.status}):\n${JSON.stringify(testData, null, 2)}\n\nNow trying full SendGrid webhook...`);
+        }
+        
+        // Then try the full SendGrid webhook
         const response = await fetch('/api/webhooks/email/sendgrid', {
             method: 'POST',
             headers: {
@@ -90,7 +108,7 @@ async function testWebhook() {
         }
         
         const data = await response.json();
-        alert(`Webhook Test Response (${response.status}):\n${JSON.stringify(data, null, 2)}`);
+        alert(`SendGrid Webhook Success (${response.status}):\n${JSON.stringify(data, null, 2)}`);
     } catch (error) {
         alert(`Webhook test error:\n${error.message}`);
     }
